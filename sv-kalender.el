@@ -1,9 +1,10 @@
 ;;; sv-kalender.el --- Swedish calendar for Emacs
 
 ;; Copyright (C) 2002,2003,2004,2007,2009 Daniel Jensen
+;; Copyright (C) 2017 Sebastian Hörberg
 
-;; Author: Daniel Jensen <daniel@bigwalter.net>
-;; Version: 1.8
+;; Author: Daniel Jensen <daniel@bigwalter.net>, Sebastian Hörberg <sebastian@cozycabin.se>
+;; Version: 1.9
 ;; Keywords: calendar swedish localization
 
 ;; This file is not part of GNU Emacs.
@@ -36,6 +37,7 @@
 
 ;;; History (ändringar):
 
+;; 1.9 - Emacs 25 support
 ;; 1.8 - Emacs 23 support. GPLv3.
 ;; 1.6 - Lunar phase names, sunrise/sunset
 ;;       (månfasernas namn, soluppgång och -nedgång)
@@ -48,12 +50,16 @@
 ;; 1.1 - Fat Tuesday moved back a week (fettisdagen flyttad en vecka bakåt).
 
 ;;; Code:
+(require 'calendar)
+(require 'holidays)
+(require 'solar)
+(require 'lunar)
 
 ;; Veckan börjar med en måndag
 (setq calendar-week-start-day 1)
 
 ;; Använd "europeiska" datum (dag/måndad)
-(setq european-calendar-style 'european)
+(setq calendar-date-style 'european)
 
 ;; Datumformat
 (setq calendar-date-display-form
@@ -133,12 +139,12 @@ Beräkna påskdagen för år YEAR."
     (calendar-dayname-on-or-before 0 (+ paschal-moon 7))))
 
 ;; Helgdagar
-(setq general-holidays
+(setq holiday-general-holidays
       '((holiday-fixed 1 1 "Nyårsdagen")
         (holiday-fixed 1 6 "Trettondedag jul")
 
         ;; Påsk och pingst
-        (filter-visible-calendar-holidays
+        (holiday-filter-visible-calendar
          (mapcar
           (lambda (dag)
             (list (calendar-gregorian-from-absolute
@@ -158,7 +164,7 @@ Beräkna påskdagen för år YEAR."
                             6 (calendar-absolute-from-gregorian
                                (list 6 26 displayed-year)))))
           ;; Midsommar
-          (filter-visible-calendar-holidays
+          (holiday-filter-visible-calendar
           (list
            (list
             (calendar-gregorian-from-absolute (1- midsommar-d))
@@ -178,16 +184,14 @@ Beräkna påskdagen för år YEAR."
         (holiday-fixed 12 26 "Annandag jul")))
 
 ;; Andra högtider
-(setq other-holidays
+(setq holiday-other-holidays
       '((holiday-fixed 1 13 "Tjogondag Knut")
-        (unless sv-hide-some-holidays
-          (holiday-fixed 1 28 "Konungens namnsdag"))
         (unless sv-hide-some-holidays
           (holiday-fixed 2 2 "Kyndelsmässodagen"))
         (holiday-fixed 2 14 "Alla hjärtans dag")
 
         ;; Fettisdagen
-        (filter-visible-calendar-holidays
+        (holiday-filter-visible-calendar
          (list
           (list
            (calendar-gregorian-from-absolute
@@ -196,12 +200,10 @@ Beräkna påskdagen för år YEAR."
            "Fettisdagen")))
 
         (holiday-fixed 3 8 "Internationella kvinnodagen")
-        (unless sv-hide-some-holidays
-          (holiday-fixed 3 12 "Kronprinsessans namnsdag"))
         (holiday-fixed 3 25 "Vårfrudagen")
 
         ;; Mer påsk
-        (filter-visible-calendar-holidays
+        (holiday-filter-visible-calendar
          (mapcar
           (lambda (dag)
             (list (calendar-gregorian-from-absolute
@@ -214,16 +216,10 @@ Beräkna påskdagen för år YEAR."
               ( -3 "Skärtorsdagen")))))
 
         (unless sv-hide-some-holidays
-          (holiday-fixed 4 30 "Konungens födelsedag"))
-        (unless sv-hide-some-holidays
           (holiday-fixed 4 1 "Första april"))
         (holiday-fixed 4 30 "Valborgsmässoafton")
         (holiday-float 5 0 -1 "Mors dag")
         (holiday-fixed 6 6 "Sveriges nationaldag")
-        (unless sv-hide-some-holidays
-          (holiday-fixed 7 14 "Kronprinsessans födelsedag"))
-        (unless sv-hide-some-holidays
-          (holiday-fixed 8 8 "Drottningens namnsdag"))
         (holiday-fixed 10 24 "FN-dagen")
         (holiday-float 11 0 2 "Fars dag")
         (unless sv-hide-some-holidays
@@ -235,13 +231,11 @@ Beräkna påskdagen för år YEAR."
         (holiday-float 12 0 -1 "Fjärde advent" 24)
         (holiday-fixed 12 10 "Nobeldagen")
         (holiday-fixed 12 13 "Lucia")
-        (unless sv-hide-some-holidays
-          (holiday-fixed 12 23 "Drottningens födelsedag"))
         (holiday-fixed 12 24 "Julafton")
         (holiday-fixed 12 31 "Nyårsafton")))
 
 ;; Solstånd, dagjämningar, vinter- och sommartid
-(setq solar-holidays
+(setq holiday-solar-holidays
       (if sv-hide-some-holidays
           nil
         '((if (fboundp 'atan)
@@ -270,5 +264,8 @@ Beräkna påskdagen för år YEAR."
 
 ;; Listan med kalenderns helgdagar
 (setq calendar-holidays
-      (append general-holidays local-holidays
-              other-holidays solar-holidays))
+      (append holiday-general-holidays holiday-local-holidays
+              holiday-other-holidays holiday-solar-holidays))
+
+(provide 'sv-kalender)
+;;; sv-kalender ends here
